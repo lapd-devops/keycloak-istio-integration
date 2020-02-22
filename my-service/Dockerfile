@@ -7,4 +7,3 @@ FROM openjdk:11
 WORKDIR /app
 COPY --from=maven app.jar ./app.jar
 ENTRYPOINT ["java","-jar","app.jar"]
-EXPOSE 8081
