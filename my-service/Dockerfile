@@ -1,7 +1,8 @@
-FROM maven:3.6.3-jdk-11-openj9
+FROM maven:3.6.3-jdk-11-openj9 AS maven
 COPY my-service/pom.xml pom.xml
 COPY my-service/src ./src
-RUN mvn package && cp my-service/target/*.jar app.jar
+RUN mvn package 
+COPY ./target/*.jar app.jar
 
 FROM openjdk:11
 WORKDIR /app
