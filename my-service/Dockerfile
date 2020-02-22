@@ -5,5 +5,6 @@ RUN mvn package && cp target/*.jar app.jar
 
 FROM openjdk:11
 WORKDIR /app
-COPY --from=maven /app/app.jar ./app.jar
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+COPY --from=maven app.jar ./app.jar
+ENTRYPOINT ["java","-jar","app.jar"]
+EXPOSE 8081
