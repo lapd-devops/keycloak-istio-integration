@@ -1,0 +1,95 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+  namespace: my-ns
+  labels:
+    app: my-service
+    service: my-service
+spec:
+  ports:
+  - port: 8081
+    name: http
+  selector:
+    app: my-service
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: my-service
+  namespace: my-ns
+  labels:
+    account: my-service
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: my-service
+  namespace: my-ns
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - my-gateway
+  http:
+    - match:
+      - uri:
+          prefix: /hello
+      route:
+        - destination:
+            port:
+              number: 8081
+            host: my-service.my-ns.svc.cluster.local
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-service
+  namespace: my-ns
+  labels:
+    app: my-service
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-service
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: my-service
+        version: v1
+    spec:
+      serviceAccountName: my-service
+      containers:
+      - name: my-service
+        image: leoandrea7/my-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+---
+apiVersion: "security.istio.io/v1beta1"
+kind: "AuthorizationPolicy"
+metadata:
+  name: "my-service-authorization-policy"
+  namespace: my-ns
+spec:
+  selector:
+    matchLabels:
+      app: my-service
+  rules:
+  - to:
+    - operation:
+        methods: ["GET"]
+        paths: ["/hello*"]
+    when:
+    - key: request.auth.claims[realm_roles_array]
+      values: ["TEST-READ"]
+  - to:
+    - operation:
+        methods: ["POST", "PUT", "DELETE"]
+        paths: ["/hello*"]
+    when:
+    - key: request.auth.claims[realm_roles_array]
+      values: ["TEST-WRITE"]
